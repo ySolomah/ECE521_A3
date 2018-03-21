@@ -10,8 +10,8 @@ rng = np.random
 
 batch_size = 500
 lr = 0.002
-lam = 0.0002
-num_iter = 1000
+lam = 0.002
+num_iter = 800
 num_neurons = [1000]
 
 
@@ -20,13 +20,10 @@ initializer = tf.contrib.layers.xavier_initializer()
 
 def fcLayer(inTensor, numHidden, spatialSize=784, lamb=0):
 
-	weights = tf.Variable(initializer([spatialSize, numHidden]))
-	bias = tf.Variable(initializer([numHidden]))
-	return(tf.matmul(inTensor, weights) + bias, (lamb / 2) * tf.reduce_sum(tf.matmul(weights, weights, transpose_b=True)))
-
-plt.figure().suptitle("notMNIST softmax valid accuracy and loss")
-
-fig, ax1 = plt.subplots()
+    weights = tf.Variable(initializer([spatialSize, numHidden]), name="W" + str(spatialSize))
+    bias = tf.Variable(tf.zeros([numHidden]), name="b" + str(spatialSize))
+    bias = bias + 0.1
+    return(tf.matmul(inTensor, weights) + bias, (lamb / 2) * tf.reduce_sum(tf.matmul(weights, weights, transpose_b=True)), weights, bias)
 
 with np.load("notMNIST.npz") as data:
     Data, Target = data ["images"], data["labels"]
@@ -73,9 +70,9 @@ with np.load("notMNIST.npz") as data:
         X = tf.placeholder("float")
         y = tf.placeholder("float")
 
-        intermediateLayer, regularizeW1 = fcLayer(X, hiddenCount, lamb=lam)
+        intermediateLayer, regularizeW1, W1, b1 = fcLayer(X, hiddenCount, lamb=lam)
         featureMap = tf.nn.relu(intermediateLayer)
-        outputLayer, regularizeW2 = fcLayer(featureMap, 10, spatialSize=hiddenCount, lamb=lam)        
+        outputLayer, regularizeW2, W2, b2 = fcLayer(featureMap, 10, spatialSize=hiddenCount, lamb=lam)        
         temp4_5 = tf.nn.softmax_cross_entropy_with_logits(logits=outputLayer, labels=y)
         sigmoids = tf.nn.sigmoid_cross_entropy_with_logits(logits=outputLayer, labels=y)
         arg_max = tf.argmax(sigmoids, dimension=1)
@@ -99,6 +96,7 @@ with np.load("notMNIST.npz") as data:
         validDataReshaped = validData.reshape([validData.shape[0], validData.shape[1] * validData.shape[2]])
         validTargetReshaped = validTarget.reshape([validTarget.shape[0], validTarget.shape[1]])
 
+        saver = 0
 
         with tf.Session() as sess:
             sess.run(init)
@@ -108,6 +106,18 @@ with np.load("notMNIST.npz") as data:
                     minibatch = random.sample(list(zip(trainDataReshapeMatt, trainTarget)), batch_size)
                     miniBatchData, miniBatchTarget = zip(*minibatch)
                     if(new_epoch):
+                        if(saver == 3 and epoch > 0.99 * int(num_iter / trainDataReshaped.shape[0])):
+                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/99save1_1')
+                            saver = saver + 1
+                        if(saver == 2 and epoch > 0.74 * int(num_iter / trainDataReshaped.shape[0])):
+                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/74save1_1')
+                            saver = saver + 1
+                        if(saver == 1 and epoch > 0.49 * int(num_iter / trainDataReshaped.shape[0])):
+                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/49save1_1')
+                            saver = saver + 1
+                        if(saver == 0 and epoch > 0.24 * int(num_iter / trainDataReshaped.shape[0])):
+                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/24save1_1')
+                            saver = saver + 1
                         new_epoch = False
                         if(epoch % 100 == 0):
                             print("\n\nEpoch : " + str(epoch) +  "\n Loss : " + str(sess.run(loss, feed_dict={X: miniBatchData, y: miniBatchTarget})) + "\n Total Loss : " + str(sess.run(total_loss, feed_dict={X: miniBatchData, y: miniBatchTarget})))
@@ -128,11 +138,11 @@ with np.load("notMNIST.npz") as data:
                         loss_array.append(accuracy*100)
                        	print("accuracy: ", accuracy)
                        	'''
-                       	for guessIn, guessOut, truthCopy, accuracy_array, loss_array in
+                       	for guessIn, guessOut, truthCopy, accuracy_array, loss_array in \
                        		zip([trainDataReshaped2, validDataReshaped, testDataReshaped], 
-                       			[trainTargetReshaped2, validTargetReshaped, testTargetReshaped],
-                       			[trainTargetCopy, validTargetCopy, testTargetCopy],
-                       			[train_accuracy, valid_accuracy, test_accuracy],
+                       			[trainTargetReshaped2, validTargetReshaped, testTargetReshaped], 
+                       			[trainTargetCopy, validTargetCopy, testTargetCopy], 
+                       			[train_accuracy, valid_accuracy, test_accuracy], 
                        			[train_loss, valid_loss, test_loss]):
                        		guesses = sess.run(softmax_acc, feed_dict={X: guessIn, y: guessOut})
 	                        accuracy = 1 - (((np.absolute(guesses - truthCopy)).clip(0, 1).sum())/guesses.shape[0])
@@ -142,21 +152,44 @@ with np.load("notMNIST.npz") as data:
 	                       	print("accuracy: ", accuracy)
 
                     sess.run(optim, feed_dict={X: miniBatchData, y: miniBatchTarget})
-
-        ax1.plot(epoch_array, train_accuracy, 'b-', label="Train Accuracy")
+        '''
+        trainplt = ax1.plot(epoch_array, train_accuracy, 'go', label="Train Accuracy")
         ax1.set_xlabel('Epoch')
         ax1.set_ylabel("Accuracy %", color='b')
-        ax1.plot(epoch_array, valid_accuracy, 'b.', label="Valid Accuracy")
-        ax1.plot(epoch_array, test_accuracy, 'bo', label="Test Accuracy")
+        validplt = ax1.plot(epoch_array, valid_accuracy, 'ro', label="Valid Accuracy")
+        testplt = ax1.plot(epoch_array, test_accuracy, 'bo', label="Test Accuracy")
+        #plt.legend([trainplt, validplt, testplt], ["Train Acc", "Valid Acc", "Test Acc"])
+        ax1.legend(loc="upper right")
         #ax2 = ax1.twinx()
         #ax1.plot(epoch_array, cross_loss, 'r.')
         #ax2.set_ylabel("Loss", color='r')
         fig.tight_layout()
+        ax2.set_xlabel("Epoch")
+        ax2.set_ylabel("Loss ", color='r')
+        trainloss = ax2.plot(epoch_array, train_loss, 'go', label="Train Loss")
+        validloss = ax2.plot(epoch_array, valid_loss, 'ro', label="Valid Loss")
+        testloss = ax2.plot(epoch_array, test_loss, 'bo', lable="Test Loss")
+        ax2.legend(loc="upper right")
         plt.show()
-    plt.xlabel("epoch")
-    plt.ylabel("loss")
-    plt.legend()
-    plt.show()
-                
+        '''
+        fig1 = plt.figure()
+        ax1 = fig1.add_subplot(111)
+        ax1.set_xlabel('Epoch')
+        ax1.set_ylabel("Accuracy %", color='b')
+        trainplt = ax1.plot(epoch_array, train_accuracy, 'go', label="Train Accuracy")
+        validplt = ax1.plot(epoch_array, valid_accuracy, 'ro', label="Valid Accuracy")
+        testplt = ax1.plot(epoch_array, test_accuracy, 'bo', label="Test Accuracy")
+        ax1.legend(loc="upper right")
+
+        fig2 = plt.figure()
+        ax2 = fig2.add_subplot(111)
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel("Loss", color='b')
+        trainplt = ax2.plot(epoch_array, train_loss, 'go', label="Train Loss")
+        validplt = ax2.plot(epoch_array, valid_loss, 'ro', label="Valid Loss")
+        testplt = ax2.plot(epoch_array, test_loss, 'bo', label="Test Loss")
+        ax2.legend(loc="upper right")
+
+        plt.show()
 
         
