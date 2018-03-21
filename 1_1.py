@@ -11,7 +11,7 @@ rng = np.random
 batch_size = 500
 lr = 0.002
 lam = 0.002
-num_iter = 800
+num_iter = 1000
 num_neurons = [1000]
 
 
@@ -138,8 +138,9 @@ with np.load("notMNIST.npz") as data:
                         loss_array.append(accuracy*100)
                        	print("accuracy: ", accuracy)
                        	'''
-                       	for guessIn, guessOut, truthCopy, accuracy_array, loss_array in \
-                       		zip([trainDataReshaped2, validDataReshaped, testDataReshaped], 
+                       	for typeAcc, guessIn, guessOut, truthCopy, accuracy_array, loss_array in \
+                       		zip(["train", "valid", "test"],
+                                [trainDataReshaped2, validDataReshaped, testDataReshaped], 
                        			[trainTargetReshaped2, validTargetReshaped, testTargetReshaped], 
                        			[trainTargetCopy, validTargetCopy, testTargetCopy], 
                        			[train_accuracy, valid_accuracy, test_accuracy], 
@@ -149,7 +150,7 @@ with np.load("notMNIST.npz") as data:
 	                       	entropy_loss = sess.run(temp5, feed_dict={X: guessIn, y: guessOut})/guesses.shape[0]
 	                       	loss_array.append(entropy_loss)
 	                        accuracy_array.append(accuracy*100)
-	                       	print("accuracy: ", accuracy)
+	                       	print("Epoch: ", epoch, " type: ", typeAcc, " with accuracy: ", accuracy)
 
                     sess.run(optim, feed_dict={X: miniBatchData, y: miniBatchTarget})
         '''
