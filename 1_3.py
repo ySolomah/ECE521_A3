@@ -3,6 +3,7 @@ import numpy
 import matplotlib.pyplot as plt
 import numpy as np
 import random
+from PIL import Image
 
 
 
@@ -10,11 +11,11 @@ rng = np.random
 
 batch_size = 500
 lr = 0.002
-lam = 0.002
-num_iter = 500	
+lam = 0.0
+num_iter = 500
 num_neurons = [1000]
 keep_prob = 0.5
-save = False
+save = True
 
 validTrain = 1
 initializer = tf.contrib.layers.xavier_initializer()
@@ -108,22 +109,37 @@ with np.load("notMNIST.npz") as data:
             sess.run(init)
             for epoch in range(int(num_iter / trainDataReshaped.shape[0])):
                 new_epoch = True
-                print(W1.eval())
                 for miniBatchData, miniBatchTarget in zip(trainDataReshaped, trainTargetReshaped):
                     minibatch = random.sample(list(zip(trainDataReshapeMatt, trainTarget)), batch_size)
                     miniBatchData, miniBatchTarget = zip(*minibatch)
                     if(new_epoch):
                         if(save and saver == 3 and epoch > 0.99 * int(num_iter / trainDataReshaped.shape[0])):
-                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/99save1_3')
+
+                            #tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521/ECE521_A3/99save1_3')
                             saver = saver + 1
                         if(save and saver == 2 and epoch > 0.74 * int(num_iter / trainDataReshaped.shape[0])):
-                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/74save1_3')
+                            print("Image Open")
+                            weight_array = W1.eval()
+                            weight_array = ((weight_array - numpy.amin(weight_array))/numpy.amax(weight_array))*255
+                            img = Image.fromarray(np.uint8(weight_array), 'L')
+                            img.show(title="75%; lambda=" + str(lam) + "; dropout=" + str(keep_prob))
+                            #tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521/ECE521_A3/74save1_3')
                             saver = saver + 1
                         if(save and saver == 1 and epoch > 0.49 * int(num_iter / trainDataReshaped.shape[0])):
-                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/49save1_3')
+                            print("Image Open")
+                            weight_array = W1.eval()
+                            weight_array = ((weight_array - numpy.amin(weight_array))/numpy.amax(weight_array))*255
+                            img = Image.fromarray(np.uint8(weight_array), 'L')
+                            img.show(title="50%; lambda=" + str(lam) + "; dropout=" + str(keep_prob))
+                            #tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521/ECE521_A3/49save1_3')
                             saver = saver + 1
                         if(save and saver == 0 and epoch > 0.24 * int(num_iter / trainDataReshaped.shape[0])):
-                            tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521_A3/ECE521_A3/24save1_3')
+                            print("Image Open")
+                            weight_array = W1.eval()
+                            weight_array = ((weight_array - numpy.amin(weight_array))/numpy.amax(weight_array))*255
+                            img = Image.fromarray(np.uint8(weight_array), 'L')
+                            img.show(title="25%; lambda=" + str(lam) + "; dropout=" + str(keep_prob))
+                            #tf.train.Saver().save(sess, '/Users/yassirsolomah/ECE521/ECE521_A3/24save1_3')
                             saver = saver + 1
                         new_epoch = False
                         if(epoch % 100 == 0):
@@ -160,6 +176,12 @@ with np.load("notMNIST.npz") as data:
 	                       	print("Epoch: ", epoch, " type: ", typeAcc, " with accuracy: ", accuracy)
 
                     sess.run(optim, feed_dict={X: miniBatchData, y: miniBatchTarget})
+            print("Image Open")
+            weight_array = W1.eval()
+            weight_array = ((weight_array - numpy.amin(weight_array))/numpy.amax(weight_array))*255
+            img = Image.fromarray(np.uint8(weight_array), 'L')
+            img.show(title="100%; lambda=" + str(lam) + "; dropout=" + str(keep_prob))
+
         '''
         trainplt = ax1.plot(epoch_array, train_accuracy, 'go', label="Train Accuracy")
         ax1.set_xlabel('Epoch')
@@ -180,6 +202,7 @@ with np.load("notMNIST.npz") as data:
         ax2.legend(loc="upper right")
         plt.show()
         '''
+
         fig1 = plt.figure()
         plt.title("Num Neuron: " + str(hiddenCount))
         ax1 = fig1.add_subplot(111)
